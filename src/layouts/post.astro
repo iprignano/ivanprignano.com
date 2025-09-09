@@ -1,0 +1,96 @@
+---
+import '../styles/global.css';
+import BaseLayout from './base.astro';
+const { frontmatter } = Astro.props;
+---
+
+<BaseLayout pageTitle={frontmatter.title}>
+  <article class="post">
+    <p class="date monospace">Published on {frontmatter.pubDate}</p>
+    <h1>{frontmatter.title}</h1>
+    <div class="content">
+      <div class="md">
+        <slot />
+      </div>
+
+      <a class="back" href="/">← Back to the homepage</a>
+    </div>
+  </article>
+</BaseLayout>
+<style is:global>
+  .md a {
+    color: rgb(60, 118, 210);
+    text-decoration: none;
+  }
+
+  .md a:hover {
+    color: rgba(60, 118, 210, 0.8);
+  }
+
+  .md hr {
+    border: none;
+    border-top: 1px solid rgba(113, 113, 113, 0.1);
+    margin: 30px 0;
+  }
+
+  .md hr::after {
+    content: '';
+    display: block;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.7);
+  }
+
+  .md strong {
+    font-style: normal;
+    font-weight: 600;
+  }
+</style>
+<style>
+  .back {
+    display: inline-block;
+    margin: 30px 0 0 0;
+    text-decoration: none;
+    font-size: 14px;
+    color: rgba(79, 79, 79, 0.5);
+  }
+
+  .back:hover {
+    color: rgb(60, 118, 210);
+  }
+
+  .post {
+    background-color: rgba(255, 255, 255, 0.7);
+    box-shadow:
+      0 2px 2px rgba(50, 74, 113, 0.2),
+      0 2px 6px rgba(50, 74, 113, 0.1),
+      0 6px 10px rgba(50, 74, 113, 0.1);
+    padding: 30px;
+    backdrop-filter: blur(30px);
+    width: 100%;
+    max-width: 780px;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  h1 {
+    margin: 0;
+  }
+
+  .date {
+    margin: 0;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: var(--body-font-color);
+  }
+
+  .content {
+    color: var(--post-font-color);
+    font-size: 17px;
+  }
+
+  @media screen and (min-width: 600px) {
+    .post {
+      padding: 40px;
+    }
+  }
+</style>

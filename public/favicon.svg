@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="667px" height="667px" viewBox="0 0 667 667" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+        <radialGradient cx="83.3640406%" cy="13.8686307%" fx="83.3640406%" fy="13.8686307%" r="98.3870431%" id="radialGradient-1">
+            <stop stop-color="#45069E" offset="0.0897381757%"></stop>
+            <stop stop-color="#FD1D1D" offset="64.2578125%"></stop>
+            <stop stop-color="#FCB045" offset="100%"></stop>
+        </radialGradient>
+        <text id="text-2" font-family="GeistMono-Regular, Geist Mono" font-size="315" font-weight="normal" fill="#FFFFFF">
+            <tspan x="145" y="413">ip</tspan>
+        </text>
+        <filter x="-7.9%" y="-7.3%" width="115.9%" height="114.6%" filterUnits="objectBoundingBox" id="filter-3">
+            <feOffset dx="0" dy="0" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="10" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="Artboard" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <circle id="Oval" fill="url(#radialGradient-1)" cx="333.5" cy="333.5" r="333.5"></circle>
+        <g id="ip" fill="#FFFFFF" fill-opacity="1">
+            <use filter="url(#filter-3)" xlink:href="#text-2"></use>
+            <use xlink:href="#text-2"></use>
+        </g>
+    </g>
+</svg>

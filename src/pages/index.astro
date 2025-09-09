@@ -1,0 +1,64 @@
+---
+import Links from '../components/Links.astro';
+import PostList from '../components/PostList.astro';
+import BaseLayout from '../layouts/base.astro';
+import '../styles/global.css';
+const allPosts = Object.values(import.meta.glob('./posts/*.md', { eager: true }));
+---
+
+<BaseLayout>
+  <div class="header">
+    <p>
+      I'm a <strong class="se">software engineer</strong> and <strong class="em"
+        >engineering manager</strong
+      > with extensive experience in web and product development.
+    </p>
+  </div>
+
+  <section>
+    <h3 class="monospace"># links</h3>
+    <Links />
+  </section>
+
+  <section>
+    <h3 class="monospace"># writing</h3>
+    <PostList posts={allPosts} />
+  </section>
+</BaseLayout>
+<style>
+  h3 {
+    font-size: 14px;
+    color: var(--body-font-color);
+  }
+
+  section + section {
+    margin-top: 60px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+
+  p {
+    margin-top: 40px;
+    max-width: 400px;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 400;
+    font-size: 18px;
+  }
+
+  strong.se {
+    color: rgba(79, 119, 184, 0.8);
+    font-weight: 500;
+  }
+
+  strong.em {
+    color: rgb(184, 79, 79, 0.8);
+    font-weight: 500;
+  }
+</style>

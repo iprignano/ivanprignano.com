@@ -1,0 +1,67 @@
+# Block AI/model-training crawlers
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+# Google AI-related
+User-agent: Google-Extended
+Disallow: /
+User-agent: GoogleOther
+Disallow: /
+User-agent: GoogleOther-Image
+Disallow: /
+
+# Apple AI training
+User-agent: Applebot-Extended
+Disallow: /
+
+# ByteDance/TikTok AI
+User-agent: Bytespider
+Disallow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Disallow: /
+User-agent: PerplexityCrawler
+Disallow: /
+
+# You.com / others
+User-agent: YouBot
+Disallow: /
+User-agent: ai2bot
+Disallow: /
+User-agent: cohere-ai
+Disallow: /
+User-agent: phindbot
+Disallow: /
+User-agent: Omgili
+Disallow: /
+User-agent: omgilibot
+Disallow: /
+User-agent: DataForSeoBot
+Disallow: /
+User-agent: Amazonbot
+Disallow: /
+User-agent: Diffbot
+Disallow: /
+User-agent: ImagesiftBot
+Disallow: /
+User-agent: Meta-ExternalAgent
+Disallow: /
+User-agent: Meta-ExternalFetcher
+Disallow: /
+
+# Default allow for others
+User-agent: *
+Allow: /

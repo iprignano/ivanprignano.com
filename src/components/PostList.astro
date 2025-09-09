@@ -1,0 +1,82 @@
+---
+const { posts } = Astro.props;
+---
+
+<ul>
+  {
+    posts.map((post: any) => (
+      <li>
+        <a href={post.url} />
+        <div>
+          <h3>{post.frontmatter.title}</h3>
+          <p class="monospace">{post.frontmatter.pubDate}</p>
+        </div>
+      </li>
+    ))
+  }
+</ul>
+<style>
+  ul {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  li {
+    width: 100%;
+    position: relative;
+    list-style: none;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    box-shadow:
+      0 2px 2px rgba(50, 74, 113, 0.2),
+      0 2px 6px rgba(50, 74, 113, 0.1),
+      0 6px 10px rgba(50, 74, 113, 0.1);
+    border-radius: 10px;
+    transition: all 150ms ease-in-out;
+    overflow: hidden;
+  }
+
+  li::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url(/noise.svg);
+    mix-blend-mode: overlay;
+  }
+
+  li:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow:
+      0 2px 2px rgba(50, 74, 113, 0.2),
+      0 2px 8px rgba(50, 74, 113, 0.1),
+      0 6px 12px rgba(50, 74, 113, 0.1),
+      0 10px 14px rgba(50, 74, 113, 0.1);
+  }
+
+  a {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  p {
+    font-size: 15px;
+    opacity: 0.5;
+    margin: 2px 0 0;
+  }
+
+  h3 {
+    margin: 0;
+  }
+
+  @media screen and (min-width: 600px) {
+    ul {
+      max-width: 300px;
+    }
+  }
+</style>
