@@ -1,0 +1,240 @@
+---
+const STEPS_LENGHT = 8;
+const STEPS_ARRAY = Array.from({ length: STEPS_LENGHT }, (_, i) => i + 1);
+---
+
+<script>
+  type State = 'idle' | 'playing' | 'paused';
+  const INSTRUMENTS = ['kick', 'snare', 'hihats'] as const;
+  const INTERVAL_TIME_IN_MS = 250;
+
+  const audioCtx = new AudioContext();
+  const stepsLength = Number(
+    document.querySelector('#wrapper')?.getAttribute('data-steps-length') || 8
+  );
+  const playToggle = document.querySelector('[data-play-toggle]');
+  const stepDisplayEl = document.querySelector('#currentStep') as HTMLDivElement;
+
+  // Kick
+  const playKick = (time: number) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 150;
+    osc.frequency.setValueAtTime(150, time);
+    gain.gain.setValueAtTime(1, time);
+    osc.frequency.exponentialRampToValueAtTime(0.001, time + 1);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 1);
+    osc.start(time);
+    osc.stop(time + 1);
+  };
+
+  // Snare
+  const playSnare = (time: number) => {
+    const bufferSize = audioCtx.sampleRate * 1; // set the time of the note
+
+    // Create an empty buffer
+    const noiseBuffer = new AudioBuffer({
+      length: bufferSize,
+      sampleRate: audioCtx.sampleRate,
+    });
+
+    // Fill the buffer with noise
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    // Create a buffer source for our created data
+    const noise = new AudioBufferSourceNode(audioCtx, {
+      buffer: noiseBuffer,
+    });
+
+    // Filter the output
+    const bandpass = new BiquadFilterNode(audioCtx, {
+      type: 'highpass',
+      frequency: 2000,
+    });
+
+    const osc = audioCtx.createOscillator();
+    osc.type = 'triangle';
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 700;
+    osc.frequency.setValueAtTime(700, time);
+    gain.gain.setValueAtTime(1, time);
+    osc.frequency.exponentialRampToValueAtTime(600, time + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+    osc.start(time);
+    osc.stop(time + 0.5);
+
+    const noiseGain = audioCtx.createGain();
+    noise.connect(bandpass).connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noiseGain.gain.setValueAtTime(1, time);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+    noise.start(time);
+    noise.stop(time + 0.2);
+  };
+
+  // Hihats
+  const playHihats = (time: number) => {
+    const bufferSize = audioCtx.sampleRate * 1; // set the time of the note
+
+    // Create an empty buffer
+    const noiseBuffer = new AudioBuffer({
+      length: bufferSize,
+      sampleRate: audioCtx.sampleRate,
+    });
+
+    // Fill the buffer with noise
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    // Create a buffer source for our created data
+    const noise = new AudioBufferSourceNode(audioCtx, {
+      buffer: noiseBuffer,
+    });
+
+    // Filter the output
+    const bandpass = new BiquadFilterNode(audioCtx, {
+      type: 'highpass',
+      frequency: 8000,
+    });
+
+    const noiseGain = audioCtx.createGain();
+    noise.connect(bandpass).connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noiseGain.gain.setValueAtTime(1, time);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+    noise.start(time);
+    noise.stop(time + 0.2);
+  };
+
+  let state: State = 'idle';
+  let currentStep = 0;
+  let intervalId: NodeJS.Timeout;
+
+  const highlightCurrentStep = (stepToHighlight: number) => {
+    const allSteps = document.querySelectorAll('#steps th');
+    [...allSteps].forEach(s => s.classList.remove('currentStep'));
+    const activeStep = document.querySelector(`#steps th[data-step="${stepToHighlight}"]`);
+    activeStep?.classList.add('currentStep');
+  };
+
+  const getInstrumentSteps = (instrument: 'kick' | 'snare' | 'hihats') => {
+    const instrumentSteps = [...document.querySelectorAll(`[data-${instrument}-step]`)].map(
+      input => (input as HTMLInputElement).checked
+    );
+    return instrumentSteps;
+  };
+
+  const playCallback = () => {
+    intervalId = setInterval(() => {
+      if (currentStep >= stepsLength) {
+        currentStep = 0;
+      }
+
+      currentStep++;
+
+      const [kickSteps, snareSteps, hhSteps] = INSTRUMENTS.map(instr => getInstrumentSteps(instr));
+      if (kickSteps[currentStep - 1]) {
+        playKick(audioCtx.currentTime * 1);
+      }
+      if (snareSteps[currentStep - 1]) {
+        playSnare(audioCtx.currentTime * 1);
+      }
+      if (hhSteps[currentStep - 1]) {
+        playHihats(audioCtx.currentTime * 1);
+      }
+
+      highlightCurrentStep(currentStep);
+
+      stepDisplayEl.innerHTML = `${currentStep}`;
+    }, INTERVAL_TIME_IN_MS);
+  };
+
+  playToggle?.addEventListener('click', () => {
+    if (['idle', 'paused'].includes(state)) {
+      if (state === 'paused') {
+        audioCtx.resume();
+      }
+      playToggle.innerHTML = 'Pause';
+      state = 'playing';
+      playCallback();
+    } else {
+      audioCtx.suspend();
+      clearInterval(intervalId);
+      playToggle.innerHTML = 'Play';
+      state = 'paused';
+    }
+  });
+</script>
+
+<div id="wrapper" data-steps-length={STEPS_LENGHT}>
+  <table>
+    <thead id="steps">
+      <th>instrument</th>
+      {
+        STEPS_ARRAY.map(step => {
+          return <th data-step={step}>{step}</th>;
+        })
+      }
+    </thead>
+    <tbody>
+      <tr id="kick">
+        <td>Kick</td>
+        {
+          STEPS_ARRAY.map(step => {
+            return (
+              <td>
+                <input data-kick-step={step} type="checkbox" />
+              </td>
+            );
+          })
+        }
+      </tr>
+      <tr id="snare">
+        <td>Snare</td>
+        {
+          STEPS_ARRAY.map(step => {
+            return (
+              <td>
+                <input data-snare-step={step} type="checkbox" />
+              </td>
+            );
+          })
+        }
+      </tr>
+      <tr id="hh">
+        <td>Hi-hats</td>
+        {
+          STEPS_ARRAY.map(step => {
+            return (
+              <td>
+                <input data-hihats-step={step} type="checkbox" />
+              </td>
+            );
+          })
+        }
+      </tr>
+    </tbody>
+  </table>
+  <button data-play-toggle>Play</button>
+  <p id="currentStep"></p>
+</div>
+<style>
+  .wrapper {
+    width: 100%;
+    max-width: 600px;
+    padding: 10px;
+  }
+
+  .currentStep {
+    background: yellow;
+  }
+</style>
