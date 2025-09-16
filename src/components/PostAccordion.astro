@@ -1,0 +1,114 @@
+---
+const { title } = Astro.props;
+---
+
+<post-accordion>
+  <div class="wrapper">
+    <h3>
+      <button type="button" aria-expanded="true" aria-controls={title} id={`${title}-button`}>
+        <span class="title">
+          {title}
+        </span>
+        <img class="arrow" src="/arrow-down.svg" />
+      </button>
+    </h3>
+    <div id={title} role="region" aria-labelledby={`${title}-button`} class="accordion-panel">
+      <slot />
+    </div>
+  </div>
+</post-accordion>
+<style>
+  .wrapper {
+    display: block;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    border: 3px solid rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    transition: all 200ms ease-in-out;
+    margin: 40px 0;
+  }
+
+  .wrapper:hover,
+  .wrapper.open {
+    box-shadow:
+      0 1px 2px rgba(3, 114, 129, 0.3),
+      0 2px 4px rgba(3, 114, 129, 0.1),
+      0 4px 12px rgba(3, 114, 129, 0.1);
+    border: 3px solid rgba(22, 22, 22, 0.4);
+  }
+
+  button {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 200ms ease-in-out;
+  }
+
+  h3 {
+    margin: 0;
+  }
+
+  .accordion-panel {
+    height: 0;
+    overflow: hidden;
+    transition:
+      height 200ms ease-in-out,
+      opacity 200ms ease-in-out;
+    padding: 0px;
+    opacity: 0;
+  }
+
+  .arrow {
+    width: 20px;
+    height: 20px;
+    transition: all 120ms ease-in-out;
+  }
+
+  .open .accordion-panel {
+    height: auto;
+    opacity: 1;
+  }
+
+  .open .arrow {
+    transform: rotate(180deg);
+  }
+</style>
+<script>
+  class PostAccordion extends HTMLElement {
+    isOpen: boolean;
+
+    constructor() {
+      super();
+      this.isOpen = false;
+    }
+
+    connectedCallback() {
+      const rootEl = this.querySelector<HTMLElement>('.wrapper');
+      const buttonEl = this.querySelector<HTMLButtonElement>('button');
+
+      buttonEl?.addEventListener('click', () => {
+        if (!rootEl) return;
+        if (this.isOpen) {
+          rootEl.classList.remove('open');
+        } else {
+          rootEl.classList.add('open');
+        }
+
+        this.isOpen = !this.isOpen;
+      });
+    }
+  }
+
+  customElements.define('post-accordion', PostAccordion);
+</script>
