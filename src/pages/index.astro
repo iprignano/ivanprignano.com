@@ -3,7 +3,7 @@ import Links from '../components/Links.astro';
 import PostList from '../components/PostList.astro';
 import BaseLayout from '../layouts/base.astro';
 import '../styles/global.css';
-const allPosts = Object.values(import.meta.glob('./posts/*.md', { eager: true }));
+const allPosts = Object.values(import.meta.glob('./posts/*.mdx', { eager: true })).reverse();
 ---
 
 <BaseLayout>
