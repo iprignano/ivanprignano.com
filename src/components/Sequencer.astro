@@ -10,7 +10,7 @@ const INSTRUMENTS = ['kick', 'snare', 'hihats'];
   type State = 'idle' | 'playing' | 'paused';
   type Instrument = 'kick' | 'snare' | 'hihat';
 
-  const INTERVAL_TIME_IN_MS = 250;
+  const INTERVAL_TIME_IN_MS = 250; // 240 bpm
 
   const wrapper = document.querySelector('#wrapper');
   const instruments = (wrapper?.getAttribute('data-instruments')?.split(',') || []) as Instrument[];
@@ -41,20 +41,20 @@ const INSTRUMENTS = ['kick', 'snare', 'hihats'];
         currentStep = 0;
       }
 
-      currentStep++;
-
       const [kickSteps, snareSteps, hhSteps] = instruments.map(instr => getInstrumentSteps(instr));
 
       const time = audioCtx.currentTime * 1;
-      if (kickSteps[currentStep - 1]) {
+      if (kickSteps[currentStep]) {
         playKick(time);
       }
-      if (snareSteps[currentStep - 1]) {
+      if (snareSteps[currentStep]) {
         playSnare(time);
       }
-      if (hhSteps[currentStep - 1]) {
+      if (hhSteps[currentStep]) {
         playHihats(time);
       }
+
+      currentStep++;
 
       highlightCurrentStep(currentStep);
     }, INTERVAL_TIME_IN_MS);
@@ -80,40 +80,36 @@ const INSTRUMENTS = ['kick', 'snare', 'hihats'];
 <div id="wrapper" data-instruments={INSTRUMENTS} data-steps-length={STEPS_LENGHT}>
   <table>
     <thead id="steps">
-      <th>instrument</th>
-      {STEPS_ARRAY.map(step => <th data-step={step}>{step}</th>)}
+      <tr>
+        <td></td>
+        {
+          STEPS_ARRAY.map(step => (
+            <th scope="col" data-step={step}>
+              {step}
+            </th>
+          ))
+        }
+      </tr>
     </thead>
     <tbody>
-      <tr id="kick">
-        <td>Kick</td>
-        {
-          STEPS_ARRAY.map(step => (
-            <td>
-              <input data-kick-step={step} type="checkbox" />
-            </td>
-          ))
-        }
-      </tr>
-      <tr id="snare">
-        <td>Snare</td>
-        {
-          STEPS_ARRAY.map(step => (
-            <td>
-              <input data-snare-step={step} type="checkbox" checked />
-            </td>
-          ))
-        }
-      </tr>
-      <tr id="hh">
-        <td>Hi-hats</td>
-        {
-          STEPS_ARRAY.map(step => (
-            <td>
-              <input data-hihats-step={step} type="checkbox" />
-            </td>
-          ))
-        }
-      </tr>
+      {
+        INSTRUMENTS.map(instrument => (
+          <tr id={instrument}>
+            <td scope="row">{instrument}</td>
+            {STEPS_ARRAY.map(step => {
+              const attributes = {
+                [`data-${instrument}-step`]: step,
+                type: 'checkbox' as const,
+              };
+              return (
+                <td>
+                  <input {...attributes} />
+                </td>
+              );
+            })}
+          </tr>
+        ))
+      }
     </tbody>
   </table>
   <button data-play-toggle>Play</button>
