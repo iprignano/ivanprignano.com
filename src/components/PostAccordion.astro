@@ -1,18 +1,30 @@
 ---
 const { title } = Astro.props;
+import { kebabCase } from '../lib/utils';
+const kebabTitle = kebabCase(title);
 ---
 
 <post-accordion>
   <div class="wrapper">
     <h3>
-      <button type="button" aria-expanded="true" aria-controls={title} id={`${title}-button`}>
+      <button
+        type="button"
+        aria-expanded="false"
+        aria-controls={kebabTitle}
+        id={`${kebabTitle}-button`}
+      >
         <span class="title">
           {title}
         </span>
         <img class="arrow" src="/arrow-down.svg" />
       </button>
     </h3>
-    <div id={title} role="region" aria-labelledby={`${title}-button`} class="accordion-panel">
+    <div
+      id={kebabTitle}
+      role="region"
+      aria-labelledby={`${kebabTitle}-button`}
+      class="accordion-panel"
+    >
       <slot />
     </div>
   </div>
@@ -24,8 +36,11 @@ const { title } = Astro.props;
     border-radius: 10px;
     border: 3px solid rgba(0, 0, 0, 0.2);
     overflow: hidden;
-    transition: all 200ms ease-in-out;
     margin: 40px 0;
+  }
+
+  .animated {
+    transition: all 200ms ease-in-out;
   }
 
   .wrapper:hover,
@@ -50,7 +65,7 @@ const { title } = Astro.props;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    padding: 15px 20px;
     cursor: pointer;
     transition: all 200ms ease-in-out;
   }
@@ -60,13 +75,16 @@ const { title } = Astro.props;
   }
 
   .accordion-panel {
-    height: 0;
     overflow: hidden;
     transition:
       height 200ms ease-in-out,
-      opacity 200ms ease-in-out;
-    padding: 0px;
+      opacity 100ms ease-in-out;
+    padding: 15px 20px;
     opacity: 0;
+  }
+
+  .accordion-panel p {
+    background: red;
   }
 
   .arrow {
@@ -76,7 +94,6 @@ const { title } = Astro.props;
   }
 
   .open .accordion-panel {
-    height: auto;
     opacity: 1;
   }
 
@@ -95,17 +112,28 @@ const { title } = Astro.props;
 
     connectedCallback() {
       const rootEl = this.querySelector<HTMLElement>('.wrapper');
+      if (!rootEl) return;
+
       const buttonEl = this.querySelector<HTMLButtonElement>('button');
+      const buttonHeight = buttonEl?.offsetHeight || 50;
+      const setPanelHeight = (isOpen: boolean) =>
+        (rootEl.style.height = isOpen ? `auto` : `${buttonHeight + 6}px`);
+
+      setPanelHeight(this.isOpen);
 
       buttonEl?.addEventListener('click', () => {
-        if (!rootEl) return;
+        rootEl.classList.add('animated');
+
         if (this.isOpen) {
           rootEl.classList.remove('open');
+          buttonEl.ariaExpanded = 'false';
         } else {
           rootEl.classList.add('open');
+          buttonEl.ariaExpanded = 'true';
         }
 
         this.isOpen = !this.isOpen;
+        setPanelHeight(this.isOpen);
       });
     }
   }
