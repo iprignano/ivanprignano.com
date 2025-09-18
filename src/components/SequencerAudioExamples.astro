@@ -1,0 +1,73 @@
+---
+import PlayIcon from './PlayIcon.astro';
+---
+
+<div>
+  <div class="sound">
+    <strong class="monospace">Kick</strong>
+    <button data-instrument="kick" aria-label="Play kick sound"><PlayIcon /></button>
+  </div>
+  <div class="sound">
+    <strong class="monospace">Snare</strong>
+    <button data-instrument="snare" aria-label="Play snare sound"><PlayIcon /></button>
+  </div>
+  <div class="sound">
+    <strong class="monospace">Hi-Hats</strong>
+    <button data-instrument="hi-hats" aria-label="Play hi-hats sound"><PlayIcon /></button>
+  </div>
+</div>
+<style>
+  .sound {
+    display: flex;
+    width: max-content;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    margin: 5px 0;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    gap: 10px;
+  }
+
+  button {
+    display: flex;
+    width: max-content;
+    align-items: center;
+    justify-content: center;
+    appearance: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 90ms ease;
+    padding: 5px;
+  }
+
+  button:hover {
+    opacity: 0.5;
+  }
+</style>
+<script>
+  import { audioCtx, playHihats, playKick, playSnare } from '../lib/audio';
+
+  const buttons = document.querySelectorAll('button');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', evt => {
+      const element = evt.currentTarget as HTMLDivElement;
+      const instrument = element.getAttribute('data-instrument');
+      switch (instrument) {
+        case 'snare':
+          playSnare(audioCtx.currentTime);
+          break;
+        case 'kick':
+          playKick(audioCtx.currentTime);
+          break;
+        case 'hi-hats':
+          playHihats(audioCtx.currentTime);
+          break;
+        default:
+          break;
+      }
+    });
+  });
+</script>

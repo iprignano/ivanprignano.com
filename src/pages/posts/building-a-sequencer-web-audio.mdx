@@ -1,10 +1,16 @@
 ---
 layout: ../../layouts/post.astro
-title: 'Building a sequencer using the Web Audio API – Part 1'
+title: 'Building a sequencer using the Web Audio API'
 pubDate: 15/10/2025
 ---
 
+import BlogPostImage from '../../components/BlogPostImage.astro';
 import PostAccordion from '../../components/PostAccordion.astro';
+import SequencerAudioExamples from '../../components/SequencerAudioExamples.astro';
+
+import sequencerPlan from './images/sequencer-plan.jpg';
+import jsxMarkupResult from './images/sequencer-markup.png';
+import sequencerUi from './images/sequencer-styles.png';
 
 I've always been curious about the [**Web Audio API**](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API); there's something about creating beats and sounds from scratch that is exhilarating, and the idea of doing it in JS really tickled my brain.
 
@@ -14,37 +20,60 @@ Lately I've had some time to play around with it, and I've decided to document t
 
 I wanted to build something fairly simple, yet fun to play with. I thought it'd be a fun idea to synthetize some drum beats and fit them into a simple sequencer. Here's a sketch of what I visualized in my mind when thinking about the UI:
 
-![The UI as I visualized it](./images/sequencer-plan.jpg)
+<BlogPostImage
+  src={sequencerPlan}
+  alt="A sketch of the UI I wanted to implement"
+  layout="full-width"
+/>
 
 This is a pretty standard layout for sequencers or drum machines: each button column is a step in the sequence, and every row a different sound. While the sequence is playing, the active step would be highlighted.
 
-<PostAccordion title="So... what is a sequencer?" client:load>
+<PostAccordion title="So... what is a sequencer?">
   Generally speaking, an audio sequencer is a device or software which can record and/or play back sounds in a particular order. Sequencing is one of the foundational blocks of electronic music: it allows programming the reproduction of a specific sound at a specific time.
 
 </PostAccordion>
 
 I also set a few requirements for myself:
 
-#### No React (or other frameworks)
+**1) No React (or other UI/state management frameworks)**
 
-We're manipulating and playing audio through time, which is a CPU-bound activity; JavaScript is notoriously not great when it comes to
-being precise about time, being a single threaded language. Because of that, I wanted to minimize all the CPU overhead that could pile up on the main thread, including UI frameworks like React. This also gave me an opportunity to use [Astro's vanilla setup](/posts/astro).
+We're manipulating and playing audio through time, which is a CPU-bound activity; JavaScript, being a single threaded language, is notoriously _not great_ when it comes to timing precision. Because of that I wanted to minimize any kind of overhead on the main thread, and opted for a vanilla JS approach.
 
-#### No Web Audio libraries or wrappers (like [Tone.js](https://tonejs.github.io))
+**2) No Web Audio libraries or wrappers**
 
-I wanted to build something from "first principles" and learn through that. Using a library like Tone.js would be kinda like cheating :)
+I wanted to build something from "first principles" and learn through that. Using a library like [Tone.js](https://tonejs.github.io) would be kinda like cheating :)
 
-#### No help from AI
+**3) No AI coding assistants**
 
 The reason why I got into this is because I want to take the time to learn a new API, build something from scratch and have some fun in doing so. I personally find this process very satisfying, and consider it a sort of _brain workout_ that helps me keep my mind sharp. I didn't have any rush to finish this, so I decided not to use AI to help with the code because it wouldn't have been as fun for myself.
 
+At this point I had a pretty clear idea of what to do, so I started building!
+
 ## The markup
 
-```js
+Sequencers are pretty much a set of toggles – if one of the instrument toggles is "on" when the step is playing, then a sound should be reproduced. I immediately thought that a **`table`** with columns of **checkboxes** would be the perfect semantic representation of the interface I wanted in HTML.
+
+<PostAccordion title="y a table tho">
+  Someone reading this might be thinking that [the `grid`
+  model](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_grid_layout/Basic_concepts_of_grid_layout)
+  is always a better choice then dealing with tables. Although a grid layout could've been a decent
+  alternative to building this UI, a table is the right element for this specific purpose – what we
+  have on the screen is essentially tabular data (when and what sounds should play). Additionally,
+  `table` layouts come with "built-in" screen reader support, which helps us build an accessible
+  interface without too much effort.
+</PostAccordion>
+
+I started by defining some constant variables at the top of my `.astro` file, in [the "code fence"](https://docs.astro.build/en/basics/astro-components/#the-component-script):
+
+```astro
+---
 const STEPS_LENGHT = 8;
-const STEPS_ARRAY = Array.from({ length: STEPS_LENGHT }, (_, i) => i + 1);
+const STEPS_ARRAY = Array.from({ length: STEPS_LENGHT }, (_, i) => i + 1); // [1, 2, 3, ..., 8]
 const INSTRUMENTS = ['kick', 'snare', 'hihats'];
+---
 ```
+
+I then referenced these in the JSX below the code fence to build the markup – which would be then be compiled into HTML before being sent to the client.
 
 ```jsx
 <table>
@@ -73,7 +102,7 @@ const INSTRUMENTS = ['kick', 'snare', 'hihats'];
       <th scope="row">Snare</td>
       {STEPS_ARRAY.map(step => (
         <td>
-          <input data-snare-step={step} type="checkbox" checked />
+          <input data-snare-step={step} type="checkbox" />
         </td>
       ))}
     </tr>
@@ -89,7 +118,7 @@ const INSTRUMENTS = ['kick', 'snare', 'hihats'];
 </table>
 ```
 
-Which we can further refactor to abstract the markup for each instrument row by leveraging JSX (and the object spread operator):
+This worked, but I figured I could refactor the above to make it terser without making it unintelligible by leveraging JSX (and the object spread operator):
 
 ```jsx
 <table>
@@ -126,8 +155,290 @@ Which we can further refactor to abstract the markup for each instrument row by 
 </table>
 ```
 
-And this is what we ended up with – pretty bare, but we can worry about the styling later :)
+And this is what I ended up with – pretty bare, but functional!
 
-![The result of the above markup](./images/sequencer-markup.png)
+<BlogPostImage src={jsxMarkupResult} alt="The result of the above JSX markup" />
 
-## The
+With the skeleton of the interface in place, I was left with two main tasks:
+
+1. Synthetizing sounds for kicks, snares and hi-hats;
+2. Wiring the code that would reproduce those sounds based on the interface state.
+
+## The sound making part
+
+I was looking forward to playing with the sound design for my new "drum machine". I started with kicks, snares and hi-hats because I had a rough idea of how to synthetize those starting from oscillators and noise; more specifically:
+
+1. **Kicks** are fundamentally a low frequency sine wave with a short, quickly descending pitch envelope;
+2. **Hi-hats** can be synthetized very realistically by using some noise and a high-pass filter;
+3. **Snares** come in many shapes and forms – coming up with a good snare sound from scratch is a little trickier than the other two, but for simplicity's sake we can say that they're a mix of the two techniques above: a high-pitched short sine wave and some noise can be passable.
+
+<PostAccordion title="Sine waves and pitch envelopes? Wut?">
+  If you're not familiar with the glossary of sound/music making, some of the above can sound like
+  gibberish to you – I promise some of these concepts are not hard to understand, but explaining them goes
+  beyond the scope of this post.
+
+If you're interested in diving into some of the basic concepts, there's a lot of valid introductory resources online; for one I can recommend [**"Introduction to Computer Music"** by Jeffrey Hass](https://cmtext.com/index.php) as a primer, more specifically the chapters about acoustics and synthesis.
+
+</PostAccordion>
+
+With the above in mind, I whipped out the MDN documentation for [`OscillatorNode`](https://developer.mozilla.org/en-US/docs/Web/API/OscillatorNode)s and started hacking around with it. You can listen to the sounds I came up with below:
+
+<SequencerAudioExamples />
+
+All in all, I was pretty satisfied with the results – I think I could've done a better job at reproducing a more realistic snare sound, but decided to fight my perfectionism and deemed it good enough for now :) If you're interested in the code, I've included it here below:
+
+<PostAccordion title="Click here to expand the source">
+
+```ts
+const audioCtx = new AudioContext();
+
+const getNoiseAudioNode = () => {
+  const bufferSize = audioCtx.sampleRate;
+
+  // create an empty buffer
+  const noiseBuffer = new AudioBuffer({
+    length: bufferSize,
+    sampleRate: audioCtx.sampleRate,
+  });
+
+  // fill the buffer with noise
+  const data = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+
+  return new AudioBufferSourceNode(audioCtx, {
+    buffer: noiseBuffer,
+  });
+};
+
+const getFilterNode = (type: BiquadFilterType, frequency: number, Q?: number) => {
+  return new BiquadFilterNode(audioCtx, {
+    type,
+    frequency,
+    Q,
+  });
+};
+
+// Kick - low freq sine wave
+const playKick = (time: number) => {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.frequency.value = 150;
+  osc.frequency.setValueAtTime(150, time);
+
+  gain.gain.setValueAtTime(1, time);
+  osc.frequency.exponentialRampToValueAtTime(0.001, time + 1);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 1);
+
+  osc.start(time);
+  osc.stop(time + 1);
+};
+
+// Snare - high freq sine wave + short high-passed noise
+const playSnare = (time: number) => {
+  const osc = audioCtx.createOscillator();
+
+  const oscGain = audioCtx.createGain();
+  const oscHighPass = getFilterNode('highpass', 700);
+
+  osc.connect(oscHighPass).connect(oscGain);
+  oscGain.connect(audioCtx.destination);
+
+  osc.frequency.value = 850;
+  osc.frequency.setValueAtTime(850, time);
+  osc.frequency.exponentialRampToValueAtTime(550, time + 0.5);
+  oscGain.gain.setValueAtTime(1, time);
+  oscGain.gain.exponentialRampToValueAtTime(0.5, time + 0.05);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+
+  osc.start(time);
+  osc.stop(time + 0.6);
+
+  const noise = getNoiseAudioNode();
+  const noiseHighPass = getFilterNode('lowpass', 8000);
+  const noiseGain = audioCtx.createGain();
+
+  noise.connect(noiseHighPass).connect(noiseGain);
+  noiseGain.connect(audioCtx.destination);
+  noiseGain.gain.setValueAtTime(0.3, time);
+  noiseGain.gain.exponentialRampToValueAtTime(0.2, time + 0.05);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+
+  noise.start(time);
+  noise.stop(time + 0.1);
+};
+
+// Hihats - high-passed short noise
+const playHihats = (time: number) => {
+  const noise = getNoiseAudioNode();
+
+  const highPass = getFilterNode('highpass', 6000);
+  const noiseGain = audioCtx.createGain();
+
+  noise.connect(highPass).connect(noiseGain);
+  noiseGain.connect(audioCtx.destination);
+  noiseGain.gain.setValueAtTime(1, time);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+
+  noise.start(time);
+  noise.stop(time + 0.2);
+};
+
+export { audioCtx, playHihats, playKick, playSnare };
+```
+
+</PostAccordion>
+
+## Wiring it all together
+
+The last piece of the puzzle was writing the code for the actual sequencing. I started setting up a `setInterval` timer right away, but then stopped mid-way when I started doubting my approach. Surely there must've been a better way to schedule audio timing, right?
+
+I started researching previous art and found two incredibly interesting and well-presented articles about this exact topic:
+
+1. [**A tale of two clocks** by Chris Wilson](https://web.dev/articles/audio-scheduling); and
+2. [**Web audio scheduling** by Felix Roos](https://loophole-letters.vercel.app/web-audio-scheduling).
+
+I won't repeat what the two pieces say but, in short, I found that _yes_, there was a better way to schedule audio timing – but it still used `setInterval` and **didn't make a huge difference in my case**. I decided to go ahead with my initial approach, keeping in mind that if in the future I found my code to be too imprecise or erratic in the timing scheduling, I could've gone back to the solution proposed by the first article.
+
+I started implementing the logic for the play/pause button, with some very basic state management:
+
+```ts
+import { audioCtx } from '../lib/audio';
+
+let state: State = 'idle';
+let intervalId: NodeJS.Timeout;
+
+const playToggle = document.querySelector('[data-play-toggle]');
+
+const playCallback = () => {
+  intervalId = setInterval(() => {
+    // bleep bloop sounds go here
+  }, INTERVAL_TIME_IN_MS);
+};
+
+playToggle?.addEventListener('click', () => {
+  if (['idle', 'paused'].includes(state)) {
+    if (state === 'paused') {
+      audioCtx.resume();
+    }
+    playToggle.innerHTML = 'Pause';
+    state = 'playing';
+    playCallback();
+  } else {
+    audioCtx.suspend();
+    clearInterval(intervalId);
+    playToggle.innerHTML = 'Play';
+    state = 'paused';
+  }
+});
+```
+
+Then, I implemented the core of the `playCallback` function:
+
+```ts
+import { audioCtx, playHihats, playKick, playSnare } from '../lib/audio';
+
+type Instrument = 'kick' | 'snare' | 'hihat';
+
+const INTERVAL_TIME_IN_MS = 250; // 240 bpm (60s / 0,25s)
+
+// Get the instruments list from the markup data attribute
+const instruments = (wrapper?.getAttribute('data-instruments')?.split(',') || []) as Instrument[];
+
+// Get the length of the steps from the markup data attribute
+const stepsLength = Number(wrapper?.getAttribute('data-steps-length') || 8);
+
+// Get the checkbox state for each instrument row;
+// if it's checked, we want to play the sound.
+//   e.g. [false, true, false, true, false, true, ...]
+const getInstrumentSteps = (instrument: Instrument) => {
+  const instrumentSteps = [...document.querySelectorAll(`[data-${instrument}-step]`)].map(
+    input => (input as HTMLInputElement).checked
+  );
+  return instrumentSteps;
+};
+
+let currentStep = 0;
+
+const playCallback = () => {
+  intervalId = setInterval(() => {
+    if (currentStep >= stepsLength) {
+      // Wrap around the loop
+      currentStep = 0;
+    }
+
+    // Get the steps for each instrument
+    const [kickSteps, snareSteps, hhSteps] = instruments.map(instr => getInstrumentSteps(instr));
+
+    const time = audioCtx.currentTime;
+
+    // If any of the instruments are toggled "on"
+    // for the current step, play the respective sound
+    if (kickSteps[currentStep]) {
+      playKick(time);
+    }
+    if (snareSteps[currentStep]) {
+      playSnare(time);
+    }
+    if (hhSteps[currentStep]) {
+      playHihats(time);
+    }
+
+    // Move forward in the sequence
+    currentStep++;
+  }, INTERVAL_TIME_IN_MS);
+};
+```
+
+And it worked! I could see the sequencer play the sounds whenever a step would be checked for any instrument.
+
+Finally, I added the logic for highlighting the current step column in the UI:
+
+```ts
+// [...]
+
+const highlightCurrentStep = (stepToHighlight: number) => {
+  const activeStepCells = document.querySelectorAll('.current-step');
+  [...activeStepCells].forEach(s => s.classList.remove('current-step'));
+  const nextActiveSteps = document.querySelectorAll(`td:nth-child(${stepToHighlight + 1})`);
+  [...nextActiveSteps].forEach(s => s.classList.add('current-step'));
+};
+
+const playCallback = () => {
+  intervalId = setInterval(() => {
+    // [...]
+
+    highlightCurrentStep(currentStep);
+  }, INTERVAL_TIME_IN_MS);
+};
+```
+
+Here we go – we now have a very simple "drum machine" sequencing our beats! You can see a video demonstration below (_audio warning_):
+
+<video controls width="350">
+  <source src="/sequencer-demo.webm" type="video/webm" />
+</video>
+
+As a final touch, I added some styling to make the UI a little less _bare_:
+
+<BlogPostImage src={sequencerUi} alt="The new styles applied to the sequencer UI" />
+
+Done for now! You can find the [**full code here**](https://codeberg.org/iprignano/ivanprignano.com/src/branch/main/src/components/Sequencer.astro) and the live demo on [**this page**](/sequencer).
+
+## Next steps
+
+It was pretty fun to play with the Web Audio API, and the experience made me want to expand and improve on what I built here. Here's some ideas I had for developing this further:
+
+1. Adding a BPM knob to control the speed of the reproduction;
+2. Adding a toggle to make the loop 16-steps long;
+3. Adding a keyboard synthetizer to jam over the drum loop;
+4. Adding support for MIDI instruments to play the keyboard synthetizer;
+5. Adding an additional sequencer to record and play the keyboard notes;
+6. Adding a save/load/share feature using some kind of local storage (maybe `IndexedDB`?).
+
+Well, I think that's plenty for now. Maybe I'll get around to hacking on some of these soon!

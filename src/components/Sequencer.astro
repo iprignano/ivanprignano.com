@@ -4,6 +4,174 @@ const STEPS_ARRAY = Array.from({ length: STEPS_LENGHT }, (_, i) => i + 1);
 const INSTRUMENTS = ['kick', 'snare', 'hihats'];
 ---
 
+<div id="wrapper" data-instruments={INSTRUMENTS} data-steps-length={STEPS_LENGHT}>
+  <table>
+    <thead id="steps">
+      <tr>
+        <th></th>
+        {
+          STEPS_ARRAY.map(step => (
+            <th scope="col" data-step={step} class="monospace">
+              {step}
+            </th>
+          ))
+        }
+      </tr>
+    </thead>
+    <tbody>
+      {
+        INSTRUMENTS.map(instrument => (
+          <tr id={instrument}>
+            <td scope="row" class="monospace">
+              {instrument}
+            </td>
+            {STEPS_ARRAY.map(step => {
+              const attributes = {
+                [`data-${instrument}-step`]: step,
+                type: 'checkbox' as const,
+              };
+              return (
+                <td>
+                  <input {...attributes} />
+                </td>
+              );
+            })}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+  <div class="play-button-wrapper">
+    <button data-play-toggle class="monospace">Play</button>
+  </div>
+</div>
+<style>
+  #wrapper {
+    width: 100%;
+    max-width: 700px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    box-shadow:
+      0 2px 2px rgba(50, 74, 113, 0.2),
+      0 2px 6px rgba(50, 74, 113, 0.1),
+      0 6px 10px rgba(50, 74, 113, 0.1);
+  }
+
+  table {
+    width: 100%;
+    border: none;
+    border-collapse: collapse;
+  }
+
+  th[data-step] {
+    padding: 10px 0;
+    font-size: 13px;
+    color: #818181;
+  }
+
+  td[scope='row'] {
+    color: black;
+    text-align: right;
+    font-size: 12px;
+    padding-right: 10px;
+    text-transform: uppercase;
+  }
+
+  td[scope='row']:first-child,
+  th:first-child {
+    display: none;
+  }
+
+  td:not([scope='row']) {
+    text-align: center;
+  }
+
+  td {
+    padding: 10px 0;
+  }
+
+  input[type='checkbox'] {
+    appearance: none;
+    background-color: #e8e8e8;
+    border-radius: 5px;
+    border-style: none;
+    width: 25px;
+    height: 25px;
+    margin: 0;
+    cursor: pointer;
+    transition: background-color 100ms ease-out;
+  }
+
+  input[type='checkbox']:hover {
+    background-color: #d6d6d6;
+    transition-duration: 0s;
+  }
+
+  input[type='checkbox']:checked {
+    background-color: #e53e3e;
+  }
+
+  input[type='checkbox']:checked:hover {
+    background-color: #ff2929;
+  }
+
+  .current-step {
+    position: relative;
+    background-color: rgba(228, 228, 228, 0.316);
+  }
+
+  .current-step input[type='checkbox']:not(:checked) {
+    appearance: none;
+    background-color: #dddddd;
+  }
+  .current-step input[type='checkbox']:checked {
+    background-color: #ff2929;
+  }
+
+  .play-button-wrapper {
+    text-align: right;
+    padding: 5px 10px;
+  }
+
+  button[data-play-toggle] {
+    cursor: pointer;
+    padding: 15px 25px;
+    min-width: 100%;
+    border-radius: 10px;
+    border: 0;
+    background-color: #00a642;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    transition: background-color 100ms ease-out;
+  }
+
+  button[data-play-toggle]:hover {
+    background-color: #00b549;
+    transition-duration: 0s;
+  }
+
+  @media screen and (min-width: 600px) {
+    #wrapper {
+      padding: 20px 30px;
+    }
+
+    input[type='checkbox'] {
+      width: 50px;
+      height: 50px;
+    }
+
+    td[scope='row']:first-child,
+    th:first-child {
+      display: table-cell;
+    }
+
+    button[data-play-toggle] {
+      min-width: 150px;
+    }
+  }
+</style>
 <script>
   import { audioCtx, playHihats, playKick, playSnare } from '../lib/audio';
 
@@ -22,10 +190,10 @@ const INSTRUMENTS = ['kick', 'snare', 'hihats'];
   let intervalId: NodeJS.Timeout;
 
   const highlightCurrentStep = (stepToHighlight: number) => {
-    const allSteps = document.querySelectorAll('#steps th');
-    [...allSteps].forEach(s => s.classList.remove('currentStep'));
-    const activeStep = document.querySelector(`#steps th[data-step="${stepToHighlight}"]`);
-    activeStep?.classList.add('currentStep');
+    const activeStepCells = document.querySelectorAll('.current-step');
+    [...activeStepCells].forEach(s => s.classList.remove('current-step'));
+    const nextActiveSteps = document.querySelectorAll(`td:nth-child(${stepToHighlight + 1})`);
+    [...nextActiveSteps].forEach(s => s.classList.add('current-step'));
   };
 
   const getInstrumentSteps = (instrument: Instrument) => {
@@ -43,7 +211,7 @@ const INSTRUMENTS = ['kick', 'snare', 'hihats'];
 
       const [kickSteps, snareSteps, hhSteps] = instruments.map(instr => getInstrumentSteps(instr));
 
-      const time = audioCtx.currentTime * 1;
+      const time = audioCtx.currentTime;
       if (kickSteps[currentStep]) {
         playKick(time);
       }
@@ -76,52 +244,3 @@ const INSTRUMENTS = ['kick', 'snare', 'hihats'];
     }
   });
 </script>
-
-<div id="wrapper" data-instruments={INSTRUMENTS} data-steps-length={STEPS_LENGHT}>
-  <table>
-    <thead id="steps">
-      <tr>
-        <td></td>
-        {
-          STEPS_ARRAY.map(step => (
-            <th scope="col" data-step={step}>
-              {step}
-            </th>
-          ))
-        }
-      </tr>
-    </thead>
-    <tbody>
-      {
-        INSTRUMENTS.map(instrument => (
-          <tr id={instrument}>
-            <td scope="row">{instrument}</td>
-            {STEPS_ARRAY.map(step => {
-              const attributes = {
-                [`data-${instrument}-step`]: step,
-                type: 'checkbox' as const,
-              };
-              return (
-                <td>
-                  <input {...attributes} />
-                </td>
-              );
-            })}
-          </tr>
-        ))
-      }
-    </tbody>
-  </table>
-  <button data-play-toggle>Play</button>
-</div>
-<style>
-  .wrapper {
-    width: 100%;
-    max-width: 600px;
-    padding: 10px;
-  }
-
-  .currentStep {
-    background: yellow;
-  }
-</style>

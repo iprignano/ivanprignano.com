@@ -1,7 +1,7 @@
 const audioCtx = new AudioContext();
 
 const getNoiseAudioNode = () => {
-  const bufferSize = audioCtx.sampleRate * 1; // set the time of the note
+  const bufferSize = audioCtx.sampleRate;
 
   // create an empty buffer
   const noiseBuffer = new AudioBuffer({
@@ -15,7 +15,6 @@ const getNoiseAudioNode = () => {
     data[i] = Math.random() * 2 - 1;
   }
 
-  // create a buffer source for our created data
   return new AudioBufferSourceNode(audioCtx, {
     buffer: noiseBuffer,
   });
@@ -58,9 +57,9 @@ const playSnare = (time: number) => {
   osc.connect(oscHighPass).connect(oscGain);
   oscGain.connect(audioCtx.destination);
 
-  osc.frequency.value = 750;
-  osc.frequency.setValueAtTime(750, time);
-  osc.frequency.exponentialRampToValueAtTime(630, time + 0.5);
+  osc.frequency.value = 850;
+  osc.frequency.setValueAtTime(850, time);
+  osc.frequency.exponentialRampToValueAtTime(550, time + 0.5);
   oscGain.gain.setValueAtTime(1, time);
   oscGain.gain.exponentialRampToValueAtTime(0.5, time + 0.05);
   oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
@@ -69,7 +68,7 @@ const playSnare = (time: number) => {
   osc.stop(time + 0.6);
 
   const noise = getNoiseAudioNode()
-  const noiseHighPass = getFilterNode('highpass', 8000)
+  const noiseHighPass = getFilterNode('lowpass', 8000)
   const noiseGain = audioCtx.createGain();
 
   noise.connect(noiseHighPass).connect(noiseGain);
@@ -86,7 +85,7 @@ const playSnare = (time: number) => {
 const playHihats = (time: number) => {
   const noise = getNoiseAudioNode()
 
-  const highPass = getFilterNode('highpass', 8000)
+  const highPass = getFilterNode('highpass', 6000)
   const noiseGain = audioCtx.createGain();
 
   noise.connect(highPass).connect(noiseGain);
