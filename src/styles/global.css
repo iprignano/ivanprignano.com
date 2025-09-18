@@ -37,3 +37,12 @@ body {
   font-weight: 400;
   font-style: normal;
 }
+
+a {
+  color: rgb(60, 118, 210);
+  text-decoration: none;
+}
+
+a:hover {
+  color: rgba(60, 118, 210, 0.8);
+}
