@@ -1,0 +1,33 @@
+---
+import Sequencer from '../components/Sequencer.astro';
+import '../styles/global.css';
+---
+
+<main>
+  <Sequencer />
+  <p>
+    code on <a
+      href="https://codeberg.org/iprignano/ivanprignano.com/src/branch/main/src/components/Sequencer.astro"
+      rel="noreferrer noopener">codeberg</a
+    > / read the <a href="/posts/building-a-sequencer-web-audio" rel="noreferrer noopener"
+      >related article</a
+    >
+  </p>
+</main>
+<style>
+  main {
+    padding: 40px;
+    padding-top: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  p {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  a {
+  }
+</style>
