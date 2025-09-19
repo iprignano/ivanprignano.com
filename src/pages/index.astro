@@ -7,25 +7,31 @@ const allPosts = Object.values(import.meta.glob('./posts/*.mdx', { eager: true }
 ---
 
 <BaseLayout>
-  <div class="header">
-    <p>
-      I'm a <strong class="se">software engineer</strong> and <strong class="em"
-        >engineering manager</strong
-      > with extensive experience in web and product development.
-    </p>
+  <div class="wrapper">
+    <div class="header">
+      <p>
+        I'm a <strong class="se">software engineer</strong> and <strong class="em"
+          >engineering manager</strong
+        > with extensive experience in web and product development.
+      </p>
+    </div>
+
+    <section>
+      <h3 class="monospace"># links</h3>
+      <Links />
+    </section>
+
+    <section>
+      <h3 class="monospace"># writing</h3>
+      <PostList posts={allPosts} />
+    </section>
   </div>
-
-  <section>
-    <h3 class="monospace"># links</h3>
-    <Links />
-  </section>
-
-  <section>
-    <h3 class="monospace"># writing</h3>
-    <PostList posts={allPosts} />
-  </section>
 </BaseLayout>
 <style>
+  .wrapper {
+    padding: 20px;
+  }
+
   h3 {
     font-size: 14px;
     color: var(--body-font-color);
@@ -45,7 +51,7 @@ const allPosts = Object.values(import.meta.glob('./posts/*.mdx', { eager: true }
   }
 
   p {
-    margin-top: 40px;
+    margin-top: 15px;
     max-width: 400px;
     color: rgba(0, 0, 0, 0.6);
     font-weight: 400;
@@ -60,5 +66,11 @@ const allPosts = Object.values(import.meta.glob('./posts/*.mdx', { eager: true }
   strong.em {
     color: rgb(184, 79, 79, 0.8);
     font-weight: 500;
+  }
+
+  @media screen and (min-width: 600px) {
+    .wrapper {
+      padding: 0;
+    }
   }
 </style>
