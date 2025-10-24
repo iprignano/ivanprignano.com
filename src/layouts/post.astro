@@ -36,7 +36,7 @@ const { frontmatter } = Astro.props;
   }
 
   .md code:not(pre code) {
-    font-size: 16px;
+    font-size: 14px;
     padding: 2px 5px;
     border-radius: 5px;
     background-color: rgba(144, 144, 144, 0.1);
@@ -60,6 +60,31 @@ const { frontmatter } = Astro.props;
   .md video {
     max-width: 100%;
   }
+
+  .md blockquote {
+    margin: 40px 20px;
+    padding: 15px 30px;
+    background-color: rgb(245, 245, 245);
+    border-radius: 10px;
+    color: #565656;
+  }
+
+  .md #footnote-label {
+    font-family: 'Geist Mono', monospace;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: rgb(42, 42, 42);
+    display: none;
+  }
+
+  .md .footnotes {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(113, 113, 113, 0.1);
+    color: #7c7c7c;
+  }
 </style>
 <style>
   .back {
@@ -67,7 +92,7 @@ const { frontmatter } = Astro.props;
     margin: 30px 0 0 0;
     text-decoration: none;
     font-size: 14px;
-    color: rgba(79, 79, 79, 0.5);
+    color: #7c7c7c;
   }
 
   .back:hover {
