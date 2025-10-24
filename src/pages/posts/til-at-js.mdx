@@ -1,0 +1,46 @@
+---
+layout: ../../layouts/post.astro
+title: 'TIL: the at() method and integer conversions'
+pubDate: 24/10/2025
+---
+
+Today I stumbled upon a gotcha with the [`.at()` array method in JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at) that made me go _"huh, interesting!"_.
+
+I had some code in a loop that looked more or less like this (I reduced the logic to the bone, so it might look silly as it's presented – but I swear the full thing makes sense):
+
+```js
+// `arr` is an array of boolean values
+// `index` is an integer
+const derivedIndex = index / 2;
+if (arr.at(derivedIndex)) {
+  // do something
+}
+```
+
+I knew `derivedIndex` would sometimes result in being a float. I naively assumed that `at()` would behave like the bracket notation accessor for arrays: that would result in an index access returning `undefined`, which would've worked well in my case.
+
+```js
+const arr = [true, true, false];
+arr[1.5]; // undefined
+```
+
+Interestingly, **that wasn't the case** – I noticed the `if` block was being executed even when it shouldn't have been. A float index access was returning a value from the array!
+
+```js
+const arr = [true, true, false];
+arr.at(1.5); // true
+```
+
+Turns out, **`at()` always converts its parameter to an integer**, as explained in [this MDN paragraph](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion) (emphasis mine):
+
+> Some operations expect integers, most notably those that work with array/string indices, date/time components, and number radixes. After performing the number coercion steps above, the **result is truncated to an integer (by discarding the fractional part)**. If the number is `±Infinity`, it's returned as-is. If the number is `NaN` or `-0`, it's returned as `0`. The result is therefore always an integer (which is not `-0`) or `±Infinity`.
+>
+> Notably, when converted to integers, both `undefined` and `null` become `0`, because `undefined` is converted to `NaN`, which also becomes `0`.
+
+Which makes a lot of sense, I guess.
+
+This made me realize how after many years of dealing with JavaScript's weirdness, I got used to rely on some of those quirks. Most languages would throw a `TypeError` at something like `list[1.5]`[^1] – or worse, `list[1.5] = 'foo'`. JS (and TypeScript by reflection) happily lets you do all of this instead.
+
+I'm sure many folks would be horrified at this... but I have to admit I kinda like its sillyness sometimes!
+
+[^1]: From my quick test: Python and Rust do throw an error, Ruby doesn't!
