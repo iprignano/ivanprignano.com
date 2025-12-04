@@ -34,6 +34,7 @@ body::after {
   inset: 0;
   pointer-events: none;
   background: url('/noise.svg');
+  background-size: 300px;
   mix-blend-mode: overlay;
   z-index: -1;
 }
