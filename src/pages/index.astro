@@ -1,9 +1,17 @@
 ---
+import type { MDXInstance } from 'astro';
 import Links from '../components/Links.astro';
 import PostList from '../components/PostList.astro';
 import BaseLayout from '../layouts/base.astro';
 import '../styles/global.css';
-const allPosts = Object.values(import.meta.glob('./posts/*.mdx', { eager: true })).reverse();
+
+const allPosts = Object.values<MDXInstance<{ title: string; layout: string; pubDate: string }>>(
+  import.meta.glob('./posts/*.mdx', { eager: true })
+).sort((a, b) => {
+  const [aDate, aMonth, aYear] = a.frontmatter.pubDate.split('/').map(Number);
+  const [bDate, bMonth, bYear] = b.frontmatter.pubDate.split('/').map(Number);
+  return new Date(bMonth, bDate, bYear).getTime() - new Date(aMonth, aDate, aYear).getTime();
+});
 ---
 
 <BaseLayout>
