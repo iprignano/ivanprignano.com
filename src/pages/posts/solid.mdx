@@ -1,0 +1,215 @@
+---
+layout: ../../layouts/post.astro
+title: 'Solid impressions'
+pubDate: 09/12/2025
+---
+
+import PostAccordion from '../../components/PostAccordion.astro';
+
+For the past few weeks I've been using [**Solid**](https://solidjs.com) to build a small side project and I figured I'd write my thoughts about it.
+
+## What is Solid?
+
+Solid is a JavaScript framework which sports performance as its main selling point. It was the main modern framework that helped popularizing the concept of **signals** in the world of frontend developement.
+
+<PostAccordion title="What are signals?">
+
+Signals are a specific type of implementation of an [observer pattern](https://www.patterns.dev/vanilla/observer-pattern/); one where subscribers are automatically tracked. In the case of UI development, this allows what's called "fine-grained reactivity" to be leveraged when making changes to the DOM.
+
+Compared to other observer or pub/sub implementations, Signals are particularly ergonomical and fit really well in today's world of web development. Their ease of use has certainly been a big reason for their success. They even have a [TC39 proposal](https://github.com/tc39/proposal-signals) now!
+
+If you're interested in reading more about it, [this page](https://signaldb.js.org/signals/) from SignalDB does a good job of explaining their history and how they work.
+
+</PostAccordion>
+
+## The good
+
+Let's start with the good stuff.
+
+#### 1. Hold on, is this React?
+
+To anyone familiar with React, **coding a simple Solid component will come as second nature**. Thanks to JSX and the `createSignal` and `createEffect` interfaces - which look a lot like their React counterparts - the learning curve to start building with Solid won't be steep.
+
+You'll probably see this kind of example code many times to illustrate this point:
+
+```tsx
+import { createSignal } from 'solid-js';
+
+function Counter() {
+  const [count, setCount] = createSignal(0);
+  const onClick = () => setCount(n => n + 1);
+
+  return <button onClick={onClick}>Count: {count()}</button>;
+}
+```
+
+In a community affected by framework fatigue like JavaScript's, having fundamentals that relate very closely to the framework-everybody-knows is a big plus. In my opinion JSX is doing the heavy lifting here (I also believe it's a big factor of what made React popular in the first place, though I won't digress), but having an API that is pretty much a 1:1 with React's was definitely a clever call.
+
+As we'll see later, this apparent similarity might also be the reason why some devs might end up in some quirky situations in Solid.
+
+#### 2. Syntactic sugar
+
+Solid also took the opportunity to add a bunch of utilities around some of the common pain points that React developers often face. A prime example would be the JSX [**`classList`**](https://docs.solidjs.com/reference/jsx-attributes/classlist) attribute, which is basically a port of the [`classnames` package](https://www.npmjs.com/package/classnames):
+
+```tsx
+<div
+  classList={{
+    item: true, // always applied
+    isActive: props.activeId === id, // applied conditionally
+  }}
+/>
+```
+
+I also liked how the framework provides flow-control components that make it easier to do conditional rendering, such as [**`Dynamic`**](https://docs.solidjs.com/reference/components/dynamic), [**`Show`**](https://docs.solidjs.com/reference/components/show) and [**`Switch`**](https://docs.solidjs.com/reference/components/switch-and-match):
+
+```tsx
+// Dynamic
+import { Dynamic } from 'solid-js/web';
+
+const components = {
+  foo: () => <Foo />
+  // ...
+}
+
+<Dynamic component={components[yourSignal()]} />
+
+// Show
+import { Show } from 'solid-js';
+
+<Show when={data.loading}>
+  <div>Loading...</div>
+</Show>
+
+// Switch / Match
+import { Switch, Match } from 'solid-js';
+
+<Switch fallback={<p>No condition is true</p>}>
+  <Match when={condition1}>
+    <p>Result 1</p>
+  </Match>
+  <Match when={condition2}>
+    <p>Result 2</p>
+  </Match>
+</Switch>
+```
+
+Another very good one is [**`createResource`**](https://docs.solidjs.com/reference/basic-reactivity/create-resource), a handy wrapper hook to encapsulate data-fetching operations with a specialized signal:
+
+```tsx
+import { createResource } from 'solid-js';
+
+const fetchUserData = async () => {
+  // here you'd fetch the user's data
+};
+
+const [data, { mutate, refetch }] = createResource(fetchUserData);
+```
+
+Even if there's more, I'll stop here – I hope this shows how much effort the team put into establishing a good set of easy to use APIs for most common UI (and CRUD) patterns.
+
+#### 3. Yes, it's pretty fast
+
+It's probably redundant to say this, but yes – thanks to signals and its architecture, **Solid is a fast and compact framework** (7kb gzipped). There's [plenty of benchmarks](https://github.com/krausest/js-framework-benchmark) showing this, and although these can often be difficult to juxtapose with the real world, it's hard to argue with the numbers coming from those tests.
+
+My (probably not very useful) anecdotal evidence of Solid's performance is that the application I built wasn't particularly light on the browser and had many DOM nodes that would have to re-render often. Still, I never really had to worry about optimizing my code, and even when I prodded the app with dev tools to monitor potential issues with the rendering cycle, I never saw any issue that would be attributable to the framework.
+
+#### 4. Fully-featured
+
+Before getting to know it, Solid was just "another Preact" in my mind – a novel barebones library which would be extremely performance at the cost of a reduced set of features. But I was positively surprised to see that the framework is chock-full of _advanced_ features: [`suspense`](https://docs.solidjs.com/reference/components/suspense), lazy component loading for code splitting and a [router](https://docs.solidjs.com/solid-router) with SSR, streaming and data-fetching capabilities.
+
+Personally I haven't used most of those, but they just show how Solid isn't there just to fool around – it's an ambitious project.
+
+## The caveat
+
+You might say: but there must be a catch! You can't only say positive things about Solid, you buffoon!
+
+Well, I encountered a few tiny quirks here and there while working with Solid that are not worthy of listing here; and there were times where I felt like the documentation was a little lacking. But the one prominent challenge I experienced in my short time with it was **dealing with reactivity**.
+
+<PostAccordion title="What *is* reactivity, anyways?">
+
+Let me say this: **_reactivity_** is an extremely overloaded term, and is often abused and misused... because it sounds cool (it does).
+
+You can have reactive _systems_, reactive _frameworks_, reactive _programming_... or all of them together – and each of those concepts will probably mean something slightly different depending on the context and the amount of nitpicking you want to apply to the discourse.
+
+I won't try to define reactivity here; still, for the purpose of clarifying this point in the blog post, I'll say that **Solid is a reactive framework because it can subscribe to multiple data points** (signals) and **respond automatically to any changes to them** (through a subscriber: an effect or the return value of a JSX component).
+
+Here's some reading if you want to dive deeper:
+
+- https://dev.to/this-is-learning/what-the-hell-is-reactive-programming-anyway-31p5;
+- https://paulstovell.com/reactive-programming/;
+- https://en.wikipedia.org/wiki/Reactive_programming;
+- https://docs.solidjs.com/concepts/intro-to-reactivity (solid-specific);
+
+</PostAccordion>
+
+At a quick glance, _reactive_ code written in Solid seems pretty indistinguishable from code you'd see in a React application. As we mentioned before, this is a big advantage for developers approaching the framework for the first time. The dark side of this striking similarity and ease of use is that it can convincigly trick developers into thinking that signals can be treated exactly like a "plain" state variable.
+
+Let me illustrate what I mean – if you're a seasoned React developer, you might easily write something like this out of muscle memory, and not realize the issue at hand:
+
+```tsx
+const Parent = () => {
+  const [isSuccessful, setIsSuccessful] = createSignal(false);
+  const handleClick = () => {
+    setIsSuccessful(true);
+  };
+  return (
+    <Button onClick={handleClick} variant={isSuccessful() ? 'success' : 'normal'}>
+      {isSuccessful() ? 'Hooray!' : 'Click me.'}
+    </Button>
+  );
+};
+
+// ❌ We're destructuring props here – reactivity is lost!
+const Button = ({ onClick, variant, children }) => {
+  return (
+    <button onClick={onClick} classList={{ [variant]: true }}>
+      {children}
+    </button>
+  );
+};
+```
+
+Destructuring props in a component will prevent the framework from automatically tracking the reactivity of those values. Because of that, the above code won't work as expected: the button will only render its initial state and not react to `props` changes. Making `Button` access `props` would fix this issue:
+
+```tsx
+// ✅ Accessing the `props` variable preserves reactivity
+const Button = props => {
+  return (
+    <button onClick={props.onClick} classList={{ [props.variant]: true }}>
+      {props.children}
+    </button>
+  );
+};
+```
+
+For the same reason, this is problematic:
+
+```tsx
+const UserEmail = props => {
+  // ❌ We're accessing the prop outside of a tracking scope here – reactivity is lost!
+  const emailText = `Your email is ${props.email}`;
+  return <div>{emailText}</div>;
+};
+```
+
+And can be fixed by doing something like this:
+
+```tsx
+const UserEmail = props => {
+  // ✅ Using `emailText()` within the JSX tracking scope preserves reactivity
+  const emailText = () => `Your email is ${props.email}`;
+  return <div>{emailText()}</div>;
+};
+```
+
+There's more of these cases where common patterns inadvertently break Solid's reactive model. Luckily, there's a very useful [`eslint` plugin](https://github.com/solidjs-community/eslint-plugin-solid) to help developers catch these situations.
+
+The point here is that **reactivity can be tricky to develop an intuition for** – especially if you're used to React's patterns and mental model (which, to be absolutely clear, has its own idiosyncrasies to be aware of!).
+
+## Wrapping up
+
+I've enjoyed using Solid and I'd probably choose it again if I had a relatively simple project to build, or one with a particular focus on speed and performance.
+
+In a corporate setting or in a larger team context, I would still probably stick with React over anything else ([because it's boring](https://boringtechnology.club)). Still, I can't help but feel that the current trajectory of the Meta framework is making developers yearn for an alternative that is built on solid primitives (_chuckle_), performant by default, with no cruft or vendor lock-ins.
+
+Maybe Solid could be that alternative, given how easy it is to transition to it from React – or maybe the ubiquity of React will prove to be the ever impenetrable moat. Well, only time will tell!
